@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as build
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime && \
@@ -28,3 +28,18 @@ RUN cd /src/picoquic && \
     cmake . && \
     make
 
+FROM martenseemann/quic-network-simulator-endpoint:latest as tquic-interop
+
+WORKDIR /
+
+COPY --from=build \
+     /src/picoquic/picoquicdemo \
+     /picoquic/
+
+COPY --from=build \
+     /src/picoquic/run_endpoint.sh \
+     /
+
+RUN chmod u+x /run_endpoint.sh
+
+ENTRYPOINT [ "./run_endpoint.sh" ]
